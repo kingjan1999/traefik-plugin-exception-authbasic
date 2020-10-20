@@ -18,7 +18,7 @@ The following code snippet is a sample configuration for the dynamic file based 
 
   [http.middlewares]
     [http.middlewares.except-auth.plugin.except-authbasic]
-      allowIpList = ["127.0.0.1"]
+      allowIPList = ["127.0.0.1"]
       user = "user"
       password = "password"
       preventUser = true
@@ -28,17 +28,12 @@ The following code snippet is a sample configuration for the dynamic file based 
       removeHeader = true
 ```
 
-## Limitations
-
-Please note:
-
-- This plugin does currently only look at the remote ip address and ignores e.g. the `X-Forwarded-For` header
-
 ## Configuration
 
 This plugin supports the following configuration parameters:
 
-- **allowIpList** List of strings containing the allowed ip addresses (e.g. `127.0.0.1`) and ip address ranges (e.g. `127.0.0.1/8`). Default: `[]`
+- **allowIPList** List of strings containing the allowed ip addresses (e.g. `127.0.0.1`) and ip address ranges (e.g. `127.0.0.1/8`). Default: `[]`
 - **user** Username of the basic auth user to be used for authentication. Default: `"""`
 - **password** Password of the basic auth user to be used for authentication. Default: `"""`. Needs to be in plaintext!
 - **preventUser** Disallows any request trying to authenticate with the above credentials not originating from any of the allowed ip addressed. Default: `false`
+- **ipHeaders** Allows you to specify additional headers (e.g. `X-Forwarded-For`, `X-Real-IP`) to use as sources besides the requests remote ip. Please note: If any ip address can be found in one of these headers, the requests remote ip is ignored. Multiple ips in a header (e.g. `127.0.0.1,127.0.0.2`) are treated equally. Using this feature is highly discouraged. Please unsure that these headers are not set by end users.

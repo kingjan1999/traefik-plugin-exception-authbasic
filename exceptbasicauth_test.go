@@ -13,42 +13,27 @@ const Password = "password"
 const AuthHeader = "Basic dXNlcjpwYXNzd29yZA=="
 
 func TestExceptBasicAuth_AllowIp(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.1", "8.8.8.8/8"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"127.0.0.1", "8.8.8.8/8"})
 	assertAuthHeader(t, cfg, "127.0.0.1:1234", AuthHeader)
 }
 
 func TestExceptBasicAuth_DenyIp(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.1"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"127.0.0.1"})
 	assertAuthHeader(t, cfg, "127.0.0.2:1234", "")
 }
 
 func TestExceptBasicAuth_AllowIpNet(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"192.168.178.1", "127.0.0.0/8"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"192.168.178.1", "127.0.0.0/8"})
 	assertAuthHeader(t, cfg, "127.0.0.1:1234", AuthHeader)
 }
 
 func TestExceptBasicAuth_DenyIpNet(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.0/8", "8.8.8.8"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"8.8.8.8", "127.0.0.0/8"})
 	assertAuthHeader(t, cfg, "192.168.178.1:1234", "")
 }
 
 func TestExceptBasicAuth_DenyUser(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.1"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"127.0.0.1"})
 	cfg.PreventUser = true
 
 	handler, err, recorder, req := createReqAndRecorder(cfg)
@@ -66,10 +51,7 @@ func TestExceptBasicAuth_DenyUser(t *testing.T) {
 }
 
 func TestExceptBasicAuth_AllowUser(t *testing.T) {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.1"}
-	cfg.User = Username
-	cfg.Password = Password
+	cfg := createConfig([]string{"127.0.0.2"})
 
 	handler, err, recorder, req := createReqAndRecorder(cfg)
 	if err != nil {
@@ -85,6 +67,30 @@ func TestExceptBasicAuth_AllowUser(t *testing.T) {
 	}
 
 	assertHeader(t, req, "Authorization", AuthHeader)
+}
+
+func TestExceptBasicAuth_IpInHeader(t *testing.T) {
+	cfg := createConfig([]string{"127.0.0.1"})
+	cfg.IPHeaders = []string{"X-Forwarded-For"}
+
+	handler, err, recorder, req := createReqAndRecorder(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.RemoteAddr = "127.0.0.2"
+	req.Header.Set("X-Forwarded-For", "8.8.8.8,127.0.0.1")
+
+	handler.ServeHTTP(recorder, req)
+
+	assertHeader(t, req, "Authorization", AuthHeader)
+}
+
+func createConfig(allowedIps []string) *traefik_plugin_exception_basicauth.Config {
+	cfg := traefik_plugin_exception_basicauth.CreateConfig()
+	cfg.AllowIPList = allowedIps
+	cfg.User = Username
+	cfg.Password = Password
+	return cfg
 }
 
 func createReqAndRecorder(cfg *traefik_plugin_exception_basicauth.Config) (http.Handler, error, *httptest.ResponseRecorder, *http.Request) {

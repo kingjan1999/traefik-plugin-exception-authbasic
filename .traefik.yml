@@ -1,0 +1,7 @@
+displayName: Exceptions for Basic Auth
+type: middleware
+import: github.com/kingjan1999/traefik-plugin-exception-basicauth
+summary: Allow exception for basic auth based on source ips
+testData:
+  AllowIps:
+    - 127.0.0.1

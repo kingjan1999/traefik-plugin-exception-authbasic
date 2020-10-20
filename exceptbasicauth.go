@@ -2,13 +2,8 @@ package traefik_plugin_exception_basicauth
 
 import (
 	"context"
-	"encoding/base64"
-	"errors"
-	"fmt"
-	"log"
 	"net"
 	"net/http"
-	"strings"
 )
 
 type Config struct {
@@ -39,14 +34,13 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 func (e *ExceptBasicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	ip, _, err := net.SplitHostPort(req.RemoteAddr)
 	if err == nil && e.IsIpAllowed(ip) {
-		req.Header.Set("Authorization", fmt.Sprintf("Basic %s", basicAuth(e.config.User, e.config.Password)))
+		req.SetBasicAuth(e.config.User, e.config.Password)
+		// req.Header.Set("Authorization", fmt.Sprintf("Basic %s", basicAuth(e.config.User, e.config.Password)))
 	} else if e.config.PreventUser && req.Header.Get("Authorization") != "" {
-		user, _, err := parseBasicAuth(req.Header.Get("Authorization"))
-		if err == nil && user == e.config.User {
+		user, _, ok := req.BasicAuth()
+		if ok && user == e.config.User {
 			rw.WriteHeader(http.StatusUnauthorized)
 			return
-		} else {
-			log.Printf("%v for %s", err, user)
 		}
 	}
 
@@ -61,26 +55,4 @@ func (e *ExceptBasicAuth) IsIpAllowed(ip string) bool {
 	}
 
 	return false
-}
-
-func basicAuth(username, password string) string {
-	return base64.StdEncoding.EncodeToString([]byte(username + ":" + password))
-}
-
-func parseBasicAuth(headerValue string) (string, string, error) {
-	if !strings.HasPrefix(headerValue, "Basic") {
-		return "", "", errors.New("invalid auth header")
-	}
-
-	decoded, err := base64.StdEncoding.DecodeString(headerValue[6:])
-	if err != nil {
-		return "", "", err
-	}
-
-	decodedString := string(decoded)
-	values := strings.Split(decodedString, ":")
-	if len(values) != 2 {
-		return "", "", errors.New("invalid auth header")
-	}
-	return values[0], values[1], nil
 }

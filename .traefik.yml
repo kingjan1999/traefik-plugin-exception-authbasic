@@ -5,3 +5,6 @@ summary: Allow exception for basic auth based on source ips
 testData:
   AllowIps:
     - 127.0.0.1
+  PreventUser: true
+  User: user
+  Password: password

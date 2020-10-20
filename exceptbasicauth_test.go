@@ -14,7 +14,7 @@ const AuthHeader = "Basic dXNlcjpwYXNzd29yZA=="
 
 func TestExceptBasicAuth_AllowIp(t *testing.T) {
 	cfg := traefik_plugin_exception_basicauth.CreateConfig()
-	cfg.AllowIpList = []string{"127.0.0.1"}
+	cfg.AllowIpList = []string{"127.0.0.1", "8.8.8.8/8"}
 	cfg.User = Username
 	cfg.Password = Password
 	assertAuthHeader(t, cfg, "127.0.0.1:1234", AuthHeader)
@@ -26,6 +26,22 @@ func TestExceptBasicAuth_DenyIp(t *testing.T) {
 	cfg.User = Username
 	cfg.Password = Password
 	assertAuthHeader(t, cfg, "127.0.0.2:1234", "")
+}
+
+func TestExceptBasicAuth_AllowIpNet(t *testing.T) {
+	cfg := traefik_plugin_exception_basicauth.CreateConfig()
+	cfg.AllowIpList = []string{"192.168.178.1", "127.0.0.0/8"}
+	cfg.User = Username
+	cfg.Password = Password
+	assertAuthHeader(t, cfg, "127.0.0.1:1234", AuthHeader)
+}
+
+func TestExceptBasicAuth_DenyIpNet(t *testing.T) {
+	cfg := traefik_plugin_exception_basicauth.CreateConfig()
+	cfg.AllowIpList = []string{"127.0.0.0/8", "8.8.8.8"}
+	cfg.User = Username
+	cfg.Password = Password
+	assertAuthHeader(t, cfg, "192.168.178.1:1234", "")
 }
 
 func TestExceptBasicAuth_DenyUser(t *testing.T) {

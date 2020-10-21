@@ -11,16 +11,19 @@ import (
 
 // Config is the configuration for this plugin
 type Config struct {
-	AllowIPList []string `json:"allowIPList,omitempty"`
-	User        string   `json:"user"`
-	Password    string   `json:"password"`
-	PreventUser bool     `json:"preventUser"`
-	IPHeaders   []string `json:"ipHeaders"`
+	AllowIPList []string          `json:"allowIPList,omitempty"`
+	User        string            `json:"user"`
+	Password    string            `json:"password"`
+	PreventUser bool              `json:"preventUser"`
+	IPHeaders   []string          `json:"ipHeaders"`
+	Headers     map[string]string `json:"headers"`
 }
 
 // CreateConfig creates a new configuration for this plugin
 func CreateConfig() *Config {
-	return &Config{}
+	return &Config{
+		Headers: make(map[string]string),
+	}
 }
 
 // ExceptBasicAuth represents the basic properties of this plugin
@@ -30,6 +33,7 @@ type ExceptBasicAuth struct {
 	config        *Config
 	allowedIPs    []*net.IP
 	allowedIPNets []*net.IPNet
+	authHeaders   map[string]string
 }
 
 // New creates a new instance of this plugin
@@ -55,13 +59,13 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		config:        config,
 		allowedIPNets: allowedIPNets,
 		allowedIPs:    allowedIPs,
+		authHeaders:   config.Headers,
 	}, nil
 }
 
 func (e *ExceptBasicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	extractedIPs := e.extractIP(req)
-
-	if len(extractedIPs) > 0 && e.isAnyIPAllowed(extractedIPs) {
+	if (len(extractedIPs) > 0 && e.isAnyIPAllowed(extractedIPs)) || e.hasValidHeader(req) {
 		req.SetBasicAuth(e.config.User, e.config.Password)
 	} else if e.config.PreventUser && req.Header.Get("Authorization") != "" {
 		user, _, ok := req.BasicAuth()
@@ -140,4 +144,15 @@ func parseIP(allowedIP string) (*net.IP, *net.IPNet, error) {
 		return nil, nil, fmt.Errorf("unable to parse ip %s, skipping", allowedIP)
 	}
 	return &parsedIP, nil, nil
+}
+
+func (e *ExceptBasicAuth) hasValidHeader(req *http.Request) bool {
+	for headerKey, headerValue := range e.authHeaders {
+		actualHeaderValue := req.Header.Get(headerKey)
+		if actualHeaderValue == headerValue || (actualHeaderValue != "" && headerValue == "*") {
+			return true
+		}
+	}
+
+	return false
 }

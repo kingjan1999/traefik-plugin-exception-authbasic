@@ -85,6 +85,48 @@ func TestExceptBasicAuth_IpInHeader(t *testing.T) {
 	assertHeader(t, req, "Authorization", AuthHeader)
 }
 
+func TestExceptBasicAuth_AllowHeader(t *testing.T) {
+	cfg := createConfig([]string{"127.0.0.1"})
+	cfg.Headers["X-Im-Valid"] = "yes"
+
+	handler, err, recorder, req := createReqAndRecorder(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Im-Valid", "yes")
+	handler.ServeHTTP(recorder, req)
+
+	assertHeader(t, req, "Authorization", AuthHeader)
+}
+
+func TestExceptBasicAuth_AllowHeaderWildcard(t *testing.T) {
+	cfg := createConfig([]string{"127.0.0.1"})
+	cfg.Headers["X-Im-Valid"] = "*"
+
+	handler, err, recorder, req := createReqAndRecorder(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("X-Im-Valid", "maybe")
+	handler.ServeHTTP(recorder, req)
+
+	assertHeader(t, req, "Authorization", AuthHeader)
+}
+
+func TestExceptBasicAuth_DenyHeader(t *testing.T) {
+	cfg := createConfig([]string{"127.0.0.1"})
+	cfg.Headers["X-Im-Valid"] = "true"
+
+	handler, err, recorder, req := createReqAndRecorder(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	handler.ServeHTTP(recorder, req)
+
+	assertHeader(t, req, "Authorization", "")
+}
+
 func createConfig(allowedIps []string) *traefik_plugin_exception_basicauth.Config {
 	cfg := traefik_plugin_exception_basicauth.CreateConfig()
 	cfg.AllowIPList = allowedIps

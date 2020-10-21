@@ -1,4 +1,4 @@
-package traefik_plugin_exception_basicauth
+package traefik_plugin_exception_authbasic
 
 import (
 	"context"

@@ -1,8 +1,8 @@
-package traefik_plugin_exception_basicauth_test
+package traefik_plugin_exception_authbasic_test
 
 import (
 	"context"
-	traefik_plugin_exception_basicauth "github.com/kingjan1999/traefik-plugin-exception-basicauth"
+	traefik_plugin_exception_authbasic "github.com/kingjan1999/traefik-plugin-exception-authbasic"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -127,18 +127,18 @@ func TestExceptBasicAuth_DenyHeader(t *testing.T) {
 	assertHeader(t, req, "Authorization", "")
 }
 
-func createConfig(allowedIps []string) *traefik_plugin_exception_basicauth.Config {
-	cfg := traefik_plugin_exception_basicauth.CreateConfig()
+func createConfig(allowedIps []string) *traefik_plugin_exception_authbasic.Config {
+	cfg := traefik_plugin_exception_authbasic.CreateConfig()
 	cfg.AllowIPList = allowedIps
 	cfg.User = Username
 	cfg.Password = Password
 	return cfg
 }
 
-func createReqAndRecorder(cfg *traefik_plugin_exception_basicauth.Config) (http.Handler, error, *httptest.ResponseRecorder, *http.Request) {
+func createReqAndRecorder(cfg *traefik_plugin_exception_authbasic.Config) (http.Handler, error, *httptest.ResponseRecorder, *http.Request) {
 	ctx := context.Background()
 	next := http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {})
-	handler, err := traefik_plugin_exception_basicauth.New(ctx, next, cfg, "except-basic-auth-plugin")
+	handler, err := traefik_plugin_exception_authbasic.New(ctx, next, cfg, "except-basic-auth-plugin")
 	if err != nil {
 		return nil, err, nil, nil
 	}
@@ -149,7 +149,7 @@ func createReqAndRecorder(cfg *traefik_plugin_exception_basicauth.Config) (http.
 	return handler, err, recorder, req
 }
 
-func assertAuthHeader(t *testing.T, cfg *traefik_plugin_exception_basicauth.Config, remoteIp, expectedHeaderValue string) {
+func assertAuthHeader(t *testing.T, cfg *traefik_plugin_exception_authbasic.Config, remoteIp, expectedHeaderValue string) {
 	t.Helper()
 
 	handler, err, recorder, req := createReqAndRecorder(cfg)

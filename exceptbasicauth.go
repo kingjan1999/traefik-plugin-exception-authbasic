@@ -65,6 +65,10 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 
 func (e *ExceptBasicAuth) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	extractedIPs := e.extractIP(req)
+
+	// we "whitelist" the request (i.e. adding the pre-configured Auth header) on two rules
+	// - either the remote ip is allowed
+	// - or it contains a preconfigured, valid header
 	if (len(extractedIPs) > 0 && e.isAnyIPAllowed(extractedIPs)) || e.hasValidHeader(req) {
 		req.SetBasicAuth(e.config.User, e.config.Password)
 	} else if e.config.PreventUser && req.Header.Get("Authorization") != "" {
@@ -95,6 +99,8 @@ func (e *ExceptBasicAuth) extractIP(req *http.Request) []string {
 	}
 
 	if len(possibleIPs) < 1 {
+		// fallback on req.RemoteAddr if no source header is configured
+		// or could be found in the request
 		ip, _, err := net.SplitHostPort(req.RemoteAddr)
 		if err == nil {
 			possibleIPs = append(possibleIPs, ip)

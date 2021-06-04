@@ -44,7 +44,7 @@ This plugin supports the following configuration parameters:
 
 ## Known Issues
 
-### Authentication Headers are Overwritten
+### Authorization Headers Are Overwritten
 
-Any additional authentication (for example when accessing APIs via a Bearer token from a IP on the allow list) will not work. This is because
-the plugin overwrites any existing `Authorization` header with the predefined credentials to make the basic auth middleware work. [As a workarkound, we can make a backup of the `Authorization` header and restore it later.](https://github.com/kingjan1999/traefik-plugin-exception-authbasic/issues/5).
+Any additional authentication (for example when accessing APIs via a Bearer token from an IP on the allow list) will not work. This is because
+the plugin overwrites any existing `Authorization` header with the predefined credentials to make the basic auth middleware work. [As a workarkound, you can make a backup of the `Authorization` header and restore it later.](https://github.com/kingjan1999/traefik-plugin-exception-authbasic/issues/5).

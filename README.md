@@ -41,3 +41,10 @@ This plugin supports the following configuration parameters:
 - **preventUser** Disallows any request trying to authenticate with the above credentials not originating from any of the allowed ip addressed. Default: `false`
 - **ipHeaders** Allows you to specify additional headers (e.g. `X-Forwarded-For`, `X-Real-IP`) to use as sources besides the requests remote ip. Please note: If any ip address can be found in one of these headers, the requests remote ip is ignored. Multiple ips in a header (e.g. `127.0.0.1,127.0.0.2`) are treated equally. Using this feature is highly discouraged. Please ensure that these headers are not set by end users. Default: `[]`
 - **headers** Map of headers and their expected value which override the basic auth requirement as well (so requests with these headers do not require basic auth). Use `*` as wildcard value. Please note: This is or-chained with the ip based rules. Default: `{}    ` 
+
+## Known Issues
+
+### Authorization Headers Are Overwritten
+
+Any additional authentication (for example when accessing APIs via a Bearer token from an IP on the allow list) will not work. This is because
+the plugin overwrites any existing `Authorization` header with the predefined credentials to make the basic auth middleware work. [As a workarkound, you can make a backup of the `Authorization` header and restore it later.](https://github.com/kingjan1999/traefik-plugin-exception-authbasic/issues/5).
